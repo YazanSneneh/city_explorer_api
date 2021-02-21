@@ -1,0 +1,20 @@
+{
+  "name": "find-city",
+  "version": "1.0.0",
+  "description": "search for city",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YazanSneneh/find-city.git"
+  },
+  "author": "yazan abu sneneh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/YazanSneneh/find-city/issues"
+  },
+  "homepage": "https://github.com/YazanSneneh/find-city#readme"
+}
