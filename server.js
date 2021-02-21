@@ -18,7 +18,6 @@ function handleLocation(req, res) {
     const result = locationLonLat(query);
     res.send(result);
 }
-
 const locationLonLat = (query) => {
     const location = require('./data/location.json');
     const lon = location[0].lon;
