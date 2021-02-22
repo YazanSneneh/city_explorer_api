@@ -27,6 +27,7 @@ function handleWeather(req, res) {
         lon: req.query.lon,
         lat: req.query.lat
     }
+
     superagent.get(`http://api.weatherbit.io/v2.0/forecast/daily`).query(weatherQuery)
         .then(response => {
             let weatherObjects = response.body.data.map(day => {
@@ -65,23 +66,6 @@ const locationLonLat = (query, res) => {
         return res.status(500).send('error occured please try again later : ' + error);
     }
 }
-// handle weather data request 
-function handleWeatherResponse(req, res) {
-
-    // try {
-    //     const cityWeather = require('./data/weather.json').data;
-    //     // USING MAP
-    //     let arrayOfWeather = cityWeather.map(city => {
-    //         const time = city.datetime;
-    //         const forecast = city.weather.description;
-    //         return new CityWeather(forecast, formateDate(time));
-    //     })
-    //     return res.status(200).send(arrayOfWeather);
-
-    // } catch (error) {
-    //     return res.status(500).send('error occured please try again later : ' + error);
-    // }
-}
 // convert string format
 function formateDate(time) {
     let date = new Date(time)
@@ -100,8 +84,9 @@ function formateDate(time) {
 function CityObject(query, display, lon, lat) {
     this.search_query = query;
     this.formatted_query = display;
-    this.latitude = lat;
-    this.longitude = lon;
+    this.longitude = lat;
+    this.latitude = lon;
+
 }
 
 function Weather(forecast, time) {
