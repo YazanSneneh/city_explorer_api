@@ -17,6 +17,7 @@ app.get('*', handle404)
 // handle requests functions
 function handleLocation(req, res) {
     const query = req.query.city;
+    console.log(query)
     locationLonLat(query, res);
 }
 
@@ -28,17 +29,23 @@ function handle404(req, res) {
 }
 // functions
 const locationLonLat = (query, res) => {
+    const resKeys = {
+        key: process.env.GEOCODE_API_KEY,
+        q: query,
+        format: 'json',
+        limit: 5
+    }
     try {
-        superagent.get(`https://eu1.locationiq.com/v1/search.php?key=${process.env.GEOCODE_API_KEY}&q=${query}&format=json;
-            `).then(data => {
-            const lon = data.body[0].lon;
-            const lat = data.body[0].lat;
-            const display = data.body[0].display_name;
-            const resObj = new CityObject(query, display, lon, lat);
-            return res.status(200).send(resObj);
-        }).catch(err => {
-            console.log(err)
-        })
+        superagent.get(`https://eu1.locationiq.com/v1/search.php?`).query(resKeys)
+            .then(data => {
+                const lon = data.body[0].lon;
+                const lat = data.body[0].lat;
+                const display = data.body[0].display_name;
+                const resObj = new CityObject(query, display, lon, lat);
+                return res.status(200).send(resObj);
+            }).catch(err => {
+                console.log(err)
+            })
     } catch (error) {
         return res.status(500).send('error occured please try again later : ' + error);
     }
