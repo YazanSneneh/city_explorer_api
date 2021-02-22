@@ -5,6 +5,8 @@ const app = express();
 const cors = require('cors');
 app.use(cors());
 
+const superagent = require('superagent');
+
 require('dotenv').config();
 const PORT = process.env.PORT;
 
@@ -22,17 +24,21 @@ function handleWeather(req, res) {
     handleWeatherResponse(req, res)
 }
 function handle404(req, res) {
-    res.status(404).send('<h1>INVALID URL, PAGE NOT FOUND</h1>')
+    res.status(404).send('<h1> INVALID URL, PAGE NOT FOUND 404</h1>')
 }
 // functions
 const locationLonLat = (query, res) => {
     try {
-        const location = require('./data/location.json');
-        const lon = location[0].lon;
-        const lat = location[0].lat;
-        const display = location[0].display_name;
-        const resObj = new CityObject(query, display, lon, lat);
-        return res.status(200).send(resObj);
+        superagent.get(`https://eu1.locationiq.com/v1/search.php?key=${process.env.GEOCODE_API_KEY}&q=${query}&format=json;
+            `).then(data => {
+            const lon = data.body[0].lon;
+            const lat = data.body[0].lat;
+            const display = data.body[0].display_name;
+            const resObj = new CityObject(query, display, lon, lat);
+            return res.status(200).send(resObj);
+        }).catch(err => {
+            console.log(err)
+        })
     } catch (error) {
         return res.status(500).send('error occured please try again later : ' + error);
     }
@@ -47,7 +53,6 @@ function handleWeatherResponse(req, res) {
             const forecast = city.weather.description;
             return new CityWeather(forecast, formateDate(time));
         })
-
         return res.status(200).send(arrayOfWeather);
 
     } catch (error) {
