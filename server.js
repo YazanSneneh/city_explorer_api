@@ -24,18 +24,15 @@ function handleLocation(req, res) {
 function handleWeather(req, res) {
     const weatherQuery = {
         key: process.env.WEATHER_API_KEY,
-        lon: req.query.lan,
+        lon: req.query.lon,
         lat: req.query.lat
     }
-
     superagent.get(`http://api.weatherbit.io/v2.0/forecast/daily`).query(weatherQuery)
         .then(response => {
-
             let weatherObjects = response.body.data.map(day => {
                 var dayInfo = new Weather(day.weather.description, formateDate(day.datetime))
                 return dayInfo;
             })
-
             res.status(200).send(weatherObjects)
         }).catch(err => {
             res.status(500).send(err)
