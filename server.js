@@ -1,33 +1,51 @@
 'use strict';
+// ........................................................................... Modules
 const express = require('express');
-const app = express();
-
 const cors = require('cors');
-app.use(cors());
-
 const superagent = require('superagent');
-
 require('dotenv').config();
+
+const app = express();
+app.use(cors());
 const PORT = process.env.PORT;
 
-// routes
+// ............................................................................ routes
 app.get('/location', handleLocation);
 app.get('/weather', handleWeather)
 app.get('*', handle404)
-// handle requests functions
+
+//............................................................ handle requests functions
 function handleLocation(req, res) {
     const query = req.query.city;
     console.log(query)
     locationLonLat(query, res);
 }
-
+// ........................weather data request
 function handleWeather(req, res) {
-    handleWeatherResponse(req, res)
+    const weatherQuery = {
+        key: process.env.WEATHER_API_KEY,
+        lon: req.query.lan,
+        lat: req.query.lat
+    }
+
+    superagent.get(`http://api.weatherbit.io/v2.0/forecast/daily`).query(weatherQuery)
+        .then(response => {
+
+            let weatherObjects = response.body.data.map(day => {
+                var dayInfo = new Weather(day.weather.description, formateDate(day.datetime))
+                return dayInfo;
+            })
+
+            res.status(200).send(weatherObjects)
+        }).catch(err => {
+            res.status(500).send(err)
+        })
 }
 function handle404(req, res) {
     res.status(404).send('<h1> INVALID URL, PAGE NOT FOUND 404</h1>')
 }
-// functions
+//........................................................................... functions
+// handle location data request 
 const locationLonLat = (query, res) => {
     const resKeys = {
         key: process.env.GEOCODE_API_KEY,
@@ -50,23 +68,24 @@ const locationLonLat = (query, res) => {
         return res.status(500).send('error occured please try again later : ' + error);
     }
 }
-
+// handle weather data request 
 function handleWeatherResponse(req, res) {
-    try {
-        const cityWeather = require('./data/weather.json').data;
-        // USING MAP
-        let arrayOfWeather = cityWeather.map(city => {
-            const time = city.datetime;
-            const forecast = city.weather.description;
-            return new CityWeather(forecast, formateDate(time));
-        })
-        return res.status(200).send(arrayOfWeather);
 
-    } catch (error) {
-        return res.status(500).send('error occured please try again later : ' + error);
-    }
+    // try {
+    //     const cityWeather = require('./data/weather.json').data;
+    //     // USING MAP
+    //     let arrayOfWeather = cityWeather.map(city => {
+    //         const time = city.datetime;
+    //         const forecast = city.weather.description;
+    //         return new CityWeather(forecast, formateDate(time));
+    //     })
+    //     return res.status(200).send(arrayOfWeather);
+
+    // } catch (error) {
+    //     return res.status(500).send('error occured please try again later : ' + error);
+    // }
 }
-
+// convert string format
 function formateDate(time) {
     let date = new Date(time)
     let newFormat;
@@ -80,7 +99,7 @@ function formateDate(time) {
     return newFormat;
 }
 
-// data model
+// ................................................................... data model
 function CityObject(query, display, lon, lat) {
     this.search_query = query;
     this.formatted_query = display;
@@ -88,10 +107,11 @@ function CityObject(query, display, lon, lat) {
     this.longitude = lon;
 }
 
-function CityWeather(forecast, time) {
+function Weather(forecast, time) {
     this.forecast = forecast;
     this.time = time;
 }
+
 app.listen(PORT, () => {
     console.log('app is listening on port ' + PORT);
 })
