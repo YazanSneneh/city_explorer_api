@@ -5,43 +5,59 @@ const app = express();
 const cors = require('cors');
 app.use(cors());
 
+const superagent = require('superagent');
+
 require('dotenv').config();
 const PORT = process.env.PORT;
 
 // routes
 app.get('/location', handleLocation);
 app.get('/weather', handleWeather)
-
+app.get('*', handle404)
 // handle requests functions
 function handleLocation(req, res) {
     const query = req.query.city;
-    const result = locationLonLat(query);
-    res.status(200).send(result);
+    locationLonLat(query, res);
 }
 
 function handleWeather(req, res) {
-    let result = handleWeatherResponse()
-    res.status(200).send(result)
+    handleWeatherResponse(req, res)
+}
+function handle404(req, res) {
+    res.status(404).send('<h1> INVALID URL, PAGE NOT FOUND 404</h1>')
 }
 // functions
-const locationLonLat = (query) => {
-    const location = require('./data/location.json');
-    const lon = location[0].lon;
-    const lat = location[0].lat;
-    const display = location[0].display_name;
-    const resObj = new CityObject(query, display, lon, lat);
-    return resObj;
+const locationLonLat = (query, res) => {
+    try {
+        superagent.get(`https://eu1.locationiq.com/v1/search.php?key=${process.env.GEOCODE_API_KEY}&q=${query}&format=json;
+            `).then(data => {
+            const lon = data.body[0].lon;
+            const lat = data.body[0].lat;
+            const display = data.body[0].display_name;
+            const resObj = new CityObject(query, display, lon, lat);
+            return res.status(200).send(resObj);
+        }).catch(err => {
+            console.log(err)
+        })
+    } catch (error) {
+        return res.status(500).send('error occured please try again later : ' + error);
+    }
 }
 
-function handleWeatherResponse() {
-    const cityWeather = require('./data/weather.json').data;
-    let arrayOfWeather = [];
-    cityWeather.forEach(city => {
-        const time = city.datetime;
-        const forecast = city.weather.description;
-        arrayOfWeather.push(new CityWeather(forecast, formateDate(time)))
-    })
-    return arrayOfWeather;  // possible error
+function handleWeatherResponse(req, res) {
+    try {
+        const cityWeather = require('./data/weather.json').data;
+        // USING MAP
+        let arrayOfWeather = cityWeather.map(city => {
+            const time = city.datetime;
+            const forecast = city.weather.description;
+            return new CityWeather(forecast, formateDate(time));
+        })
+        return res.status(200).send(arrayOfWeather);
+
+    } catch (error) {
+        return res.status(500).send('error occured please try again later : ' + error);
+    }
 }
 
 function formateDate(time) {
@@ -56,6 +72,7 @@ function formateDate(time) {
     newFormat = date.toLocaleString('en-US', options);
     return newFormat;
 }
+
 // data model
 function CityObject(query, display, lon, lat) {
     this.search_query = query;
