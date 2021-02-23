@@ -44,7 +44,6 @@ function handleLocation(req, res) {
     }).catch(error => { console.log(error) })
 
     locationRequest(query, res)
-
 }
 function locationRequest(query, res) {
     let url = `https://eu1.locationiq.com/v1/search.php?`
