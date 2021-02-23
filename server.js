@@ -4,11 +4,14 @@ const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
 
+const pg = require('pg')
 
 // use packages
 const app = express();
 app.use(cors());
 require('dotenv').config();
+
+let client = new pg.Client(process.env.DATABASE_URL)
 
 
 // ..................................................................... app variables
@@ -40,6 +43,12 @@ function handleLocation(req, res) {
                 const display = data.body[0].display_name;
 
                 const resObj = new CityObject(query, display, lon, lat);
+                const queryDB = `INSERT INTO locations (search_query, formatted_query, latitude, longitude) VALUES($1,$2,$3,$4) RETURNING *`
+
+                let safeValues = [resObj.search_query, resObj.formatted_query, resObj.longitude, resObj.latitude];
+                client.query(queryDB, safeValues)
+                    .then(data => console.log(data.rows))
+                    .catch(error => console.log(error))
 
                 return res.status(200).send(resObj);
 
@@ -57,7 +66,6 @@ function handleWeather(req, res) {
     const weatherQuery = {
         key: process.env.WEATHER_API_KEY,
         city: req.query.search_query,
-        days: 4
     }
 
     superagent.get(url).query(weatherQuery)
@@ -81,7 +89,8 @@ function handle404(req, res) {
 // ......................handleParks
 function handleParks(req, res) {
     let parkKeys = {
-        key: process.env.PARKS_API_KEY
+        key: process.env.PARKS_API_KEY,
+        q: req.query.search_query
     }
     superagent.get(`https://developer.nps.gov/api/v1/parks?parkCode=acad&`)
         .then(data => {
@@ -91,7 +100,9 @@ function handleParks(req, res) {
             res.status(500).send(error)
         })
 }
-//........................................................................... functions
+
+//............................................................................... functions
+
 // convert string format
 function formateDate(time) {
     let date = new Date(time)
@@ -106,7 +117,7 @@ function formateDate(time) {
     return newFormat;
 }
 
-// ................................................................... data model
+// ........................................................................... data model
 function CityObject(query, display, lon, lat) {
     this.search_query = query;
     this.formatted_query = display;
@@ -119,6 +130,11 @@ function Weather(forecast, time) {
     this.time = time;
 }
 
-app.listen(PORT, () => {
-    console.log('app is listening on port ' + PORT);
-})
+
+
+client.connect()
+    .then(() =>
+        app.listen(PORT, () => {
+            console.log('app is listening on port ' + PORT);
+        })
+    ).catch(err => console.log(err))
