@@ -17,42 +17,16 @@ app.get('*', handle404)
 //............................................................ handle requests functions
 function handleLocation(req, res) {
     const query = req.query.city;
-    console.log(query)
-    locationLonLat(query, res);
-}
-// ........................weather data request
-function handleWeather(req, res) {
-    const weatherQuery = {
-        key: process.env.WEATHER_API_KEY,
-        lon: req.query.lon,
-        lat: req.query.lat
-    }
-
-    superagent.get(`http://api.weatherbit.io/v2.0/forecast/daily`).query(weatherQuery)
-        .then(response => {
-            let weatherObjects = response.body.data.map(day => {
-                var dayInfo = new Weather(day.weather.description, formateDate(day.datetime))
-                return dayInfo;
-            })
-            res.status(200).send(weatherObjects)
-        }).catch(err => {
-            res.status(500).send(err)
-        })
-}
-function handle404(req, res) {
-    res.status(404).send('<h1> INVALID URL, PAGE NOT FOUND 404</h1>')
-}
-//........................................................................... functions
-// handle location data request 
-const locationLonLat = (query, res) => {
+    const url = `https://eu1.locationiq.com/v1/search.php?`
     const resKeys = {
         key: process.env.GEOCODE_API_KEY,
         q: query,
         format: 'json',
-        limit: 5
+        limit: 1
     }
+
     try {
-        superagent.get(`https://eu1.locationiq.com/v1/search.php?`).query(resKeys)
+        superagent.get(url).query(resKeys)
             .then(data => {
                 const lon = data.body[0].lon;
                 const lat = data.body[0].lat;
@@ -66,6 +40,32 @@ const locationLonLat = (query, res) => {
         return res.status(500).send('error occured please try again later : ' + error);
     }
 }
+// ........................weather data request 
+function handleWeather(req, res) {
+    const weatherQuery = {
+        city: req.query.search_query,
+        key: process.env.WEATHER_API_KEY
+
+    }
+
+    superagent.get(`http://api.weatherbit.io/v2.0/forecast/daily`).query(weatherQuery)
+        .then(response => {
+            const data = response.body.data
+
+            let weatherObjects = data.map(day => {
+                let time = formateDate(day.datetime)
+                var dayInfo = new Weather(day.weather.description, time)
+                return dayInfo;
+            })
+            res.status(200).send(weatherObjects)
+        }).catch(err => {
+            res.status(500).send(err)
+        })
+}
+function handle404(req, res) {
+    res.status(404).send('<h1> INVALID URL, PAGE NOT FOUND 404</h1>')
+}
+//........................................................................... functions
 // convert string format
 function formateDate(time) {
     let date = new Date(time)
@@ -84,8 +84,8 @@ function formateDate(time) {
 function CityObject(query, display, lon, lat) {
     this.search_query = query;
     this.formatted_query = display;
-    this.longitude = lat;
-    this.latitude = lon;
+    this.longitude = lon;
+    this.latitude = lat;
 
 }
 
