@@ -3,13 +3,16 @@
 const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
+
 const pg = require('pg')
 
 // use packages
 const app = express();
 app.use(cors());
 require('dotenv').config();
+
 let client = new pg.Client(process.env.DATABASE_URL)
+
 
 // ..................................................................... app variables
 const PORT = process.env.PORT;
@@ -38,6 +41,7 @@ function handleLocation(req, res) {
                 const lon = data.body[0].lon;
                 const lat = data.body[0].lat;
                 const display = data.body[0].display_name;
+
                 const resObj = new CityObject(query, display, lon, lat);
                 const queryDB = `INSERT INTO locations (search_query, formatted_query, latitude, longitude) VALUES($1,$2,$3,$4) RETURNING *`
 
@@ -96,7 +100,9 @@ function handleParks(req, res) {
             res.status(500).send(error)
         })
 }
+
 //............................................................................... functions
+
 // convert string format
 function formateDate(time) {
     let date = new Date(time)
