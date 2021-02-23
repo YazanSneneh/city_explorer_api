@@ -1,10 +1,12 @@
 # city explorer api
 
 **Author**: Yazan Abu Sneneh
-**Version**: 1.0.0
+**Version**: 1.3.0
 
 ## Overview
-The city explorer api provide user location information (lon, lat, name, and brief discription) about expected location, and weather related to city for 5 days and discription about it's weather and date.
+* The city explorer api provide user location information (lon, lat, name, and brief discription) about expected location, and weather related to city for 5 days and discription about it's weather and date.
+* it also provide a route for park server api.
+* now it should respond to user from out local database as well as external resources.
 
 ## Getting Started
  1. copy Github url.
@@ -13,7 +15,7 @@ The city explorer api provide user location information (lon, lat, name, and bri
 
 ## Architecture
 <!-- Provide a detailed description of the application design. What technologies (languages, libraries, etc) you're using, and any other relevant design information. -->
-this app is build on Node.js, and libraries used are express.js as well as dotenv.
+this app is build on Node.js, and libraries used are express.js, CORS, pg as well as dotenv.
 
 ## Change Log
 <!-- Use this area to document the iterative changes made to your application as each feature is successfully implemented. Use time stamps. Here's an examples:
