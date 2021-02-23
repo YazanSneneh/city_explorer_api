@@ -11,8 +11,10 @@ const app = express();
 app.use(cors());
 require('dotenv').config();
 
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-
+// const client = new pg.Client({ connectionString: process.env.DATABASE_URL, 
+//     ssl: { rejectUnauthorized: false }
+//  });
+const client = new pg.Client(process.env.DATABASE_URL)
 // ..................................................................... app variables
 const PORT = process.env.PORT;
 // ............................................................................ routes
@@ -25,6 +27,26 @@ app.get('*', handle404)
 // ........... handle Location data request
 function handleLocation(req, res) {
     const query = req.query.city;
+    const selectQuery = `SELECT * FROM locations WHERE search_query = '${query}';`;
+    /*
+        if true :    
+            send response 200, object
+        if false : 
+            call handleRequest
+            send 200, object
+    */
+    client.query(selectQuery).then(data => {
+        console.log(data.rows[0].search_query)
+        if (data.rows.length > 0) {
+            const row = data.rows[0];
+            console.log(`${row.search_query}, ${row.formatted_query}, ${row.longitude}, ${row.latitude}`)
+        }
+    }).catch(error => { console.log(error) })
+
+    locationRequest(query, res)
+
+}
+function locationRequest(query, res) {
     let url = `https://eu1.locationiq.com/v1/search.php?`
     const resKeys = {
         key: process.env.GEOCODE_API_KEY,
@@ -48,7 +70,6 @@ function handleLocation(req, res) {
                 client.query(queryDB, safeValues)
                     .then(data => console.log(data.rows))
                     .catch(error => console.log(error))
-
                 return res.status(200).send(resObj);
 
             }).catch(error => {
@@ -58,7 +79,6 @@ function handleLocation(req, res) {
         return res.status(500).send('error occured please try again later : ' + error);
     }
 }
-
 // ........................weather data request
 function handleWeather(req, res) {
     const url = `http://api.weatherbit.io/v2.0/forecast/daily`;
@@ -84,6 +104,7 @@ function handleWeather(req, res) {
 function handle404(req, res) {
     res.status(404).send('<h1> INVALID URL, PAGE NOT FOUND 404</h1>')
 }
+// ................................................... locationDataFunction 
 
 // ......................handleParks
 function handleParks(req, res) {
