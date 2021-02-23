@@ -56,14 +56,15 @@ function handleWeather(req, res) {
     const url = `http://api.weatherbit.io/v2.0/forecast/daily`;
     const weatherQuery = {
         key: process.env.WEATHER_API_KEY,
-        lon: req.query.lon,
-        lat: req.query.lat,
+        city: req.query.search_query,
         days: 4
     }
 
     superagent.get(url).query(weatherQuery)
         .then(response => {
-            let weatherObjects = response.body.data.map(day => {
+            let data = response.body.data;
+
+            let weatherObjects = data.map(day => {
                 var dayInfo = new Weather(day.weather.description, formateDate(day.datetime))
                 return dayInfo;
             })
