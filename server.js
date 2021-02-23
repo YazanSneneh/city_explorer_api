@@ -106,17 +106,35 @@ function handle404(req, res) {
 // ................................................... locationDataFunction 
 
 // ......................handleParks
+
+// ..............................................
 function handleParks(req, res) {
-    let parkKeys = {
-        key: process.env.PARKS_API_KEY,
-        q: req.query.search_query
+    const queryPark = {
+        api_key: process.env.PARKS_API_KEY,
+        q: req.query.search_query,
+        format: 'json',
     }
-    superagent.get(`https://developer.nps.gov/api/v1/parks?parkCode=acad&`)
-        .then(data => {
-            console.log(data)
-            res.status(200).send(data)
+    let url = 'https://developer.nps.gov/api/v1/parks';
+
+    superagent.get(url).query(queryPark)
+        .then(response => {
+            let data = response.body.data;
+            let parkObject = []
+
+            data.map(element => {
+                parkObject.push(
+                    new Park(element.fullName,
+                        Object.values(element.addresses[0]).join(' '),
+                        element.entranceFees.cost,
+                        element.description, element.url)
+                )
+            })
+            res.status(200).send(parkObject)
         }).catch(error => {
-            res.status(500).send(error)
+            {
+                console.log(error)
+                res.status(500).send(error)
+            }
         })
 }
 
@@ -149,6 +167,13 @@ function Weather(forecast, time) {
     this.time = time;
 }
 
+function Park(name, address, fee, description, url) {
+    this.name = name;
+    this.fee = fee;
+    this.address = address
+    this.description = description;
+    this.url = url;
+}
 
 
 client.connect()
