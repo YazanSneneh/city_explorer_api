@@ -11,16 +11,18 @@ const app = express();
 app.use(cors());
 require('dotenv').config();
 
-// const client = new pg.Client({ connectionString: process.env.DATABASE_URL, 
-//     ssl: { rejectUnauthorized: false }
-//  });
-const client = new pg.Client(process.env.DATABASE_URL)
+const client = new pg.Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+});
+// const client = new pg.Client(process.env.DATABASE_URL)
 // ..................................................................... app variables
 const PORT = process.env.PORT;
 // ............................................................................ routes
 app.get('/location', handleLocation);
 app.get('/weather', handleWeather)
 app.get('/parks', handleParks)
+app.get('/movies', handleMovies)
 app.get('*', handle404)
 
 //............................................................ handle requests functions
@@ -99,7 +101,6 @@ function handleWeather(req, res) {
 function handle404(req, res) {
     res.status(404).send('<h1> INVALID URL, PAGE NOT FOUND 404</h1>')
 }
-// ................................................... locationDataFunction 
 // ......................handleParks
 function handleParks(req, res) {
     const queryPark = {
@@ -130,7 +131,10 @@ function handleParks(req, res) {
             }
         })
 }
+// .......................................................... handle movies
+function handleMovies()[
 
+]
 //............................................................................... functions
 // convert string format
 function formateDate(time) {
