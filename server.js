@@ -28,22 +28,18 @@ app.get('*', handle404)
 function handleLocation(req, res) {
     const query = req.query.city;
     const selectQuery = `SELECT * FROM locations WHERE search_query = '${query}';`;
-    /*
-        if true :    
-            send response 200, object
-        if false : 
-            call handleRequest
-            send 200, object
-    */
+
     client.query(selectQuery).then(data => {
-        console.log(data.rows[0].search_query)
+
         if (data.rows.length > 0) {
             const row = data.rows[0];
-            console.log(`${row.search_query}, ${row.formatted_query}, ${row.longitude}, ${row.latitude}`)
+            let dbLocation = new CityObject(row.search_query, row.formatted_query, row.longitude, row.latitude)
+            console.log('object from db', dbLocation)
+            res.statu(200).send(dbLocation)
+        } else {
+            locationRequest(query, res)
         }
     }).catch(error => { console.log(error) })
-
-    locationRequest(query, res)
 }
 function locationRequest(query, res) {
     let url = `https://eu1.locationiq.com/v1/search.php?`
@@ -64,7 +60,7 @@ function locationRequest(query, res) {
 
                 const resObj = new CityObject(query, display, lon, lat);
                 const queryDB = `INSERT INTO locations (search_query, formatted_query, latitude, longitude) VALUES($1,$2,$3,$4) RETURNING *`
-
+                console.log('has been added to database', resObj)
                 let safeValues = [resObj.search_query, resObj.formatted_query, resObj.longitude, resObj.latitude];
                 client.query(queryDB, safeValues)
                     .then(data => console.log(data.rows))
@@ -104,10 +100,7 @@ function handle404(req, res) {
     res.status(404).send('<h1> INVALID URL, PAGE NOT FOUND 404</h1>')
 }
 // ................................................... locationDataFunction 
-
 // ......................handleParks
-
-// ..............................................
 function handleParks(req, res) {
     const queryPark = {
         api_key: process.env.PARKS_API_KEY,
@@ -139,7 +132,6 @@ function handleParks(req, res) {
 }
 
 //............................................................................... functions
-
 // convert string format
 function formateDate(time) {
     let date = new Date(time)
@@ -174,7 +166,6 @@ function Park(name, address, fee, description, url) {
     this.description = description;
     this.url = url;
 }
-
 
 client.connect()
     .then(() =>
